@@ -1,0 +1,28 @@
+service:
+  name: simi
+
+custom:
+  aws: ${file(./config/aws.js)}
+  weather: ${file(./config/weather.js)}
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: prd
+  region: ap-southeast-1
+  role: ${self:custom.aws.role}
+
+package:
+  exclude:
+    - .git/**
+
+functions:
+  WeatherForecast:
+    handler: weather/forecast.index
+    environment:
+      APIKEY: ${self:custom.weather.apikey}
+      RADIUS: 3000
+    events:
+      - schedule:
+          rate: cron(0 01/04 ? * MON-FRI *)
+          enabled: true

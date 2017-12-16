@@ -1,0 +1,37 @@
+{
+  "name": "simi",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:weather": "sls invoke local -f WeatherForecast --profile=personal",
+    "deploy": "sls deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/terryx/simi.git"
+  },
+  "keywords": [
+    "reminder"
+  ],
+  "author": "Terry Yuen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/terryx/simi/issues"
+  },
+  "homepage": "https://github.com/terryx/simi#readme",
+  "devDependencies": {
+    "aws-sdk": "^2.171.0",
+    "serverless": "^1.24.1",
+    "standard": "^10.0.3"
+  },
+  "dependencies": {
+    "geolib": "^2.0.24",
+    "lodash": "^4.17.4",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2",
+    "rxjs": "^5.5.5",
+    "xml2js": "^0.4.19"
+  }
+}
