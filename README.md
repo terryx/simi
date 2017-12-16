@@ -1,5 +1,5 @@
 ## Simi
-Simi is a serverless automation bot that helps solving little problem in life such as notifying rain in your
+Simi is a serverless automation bot that helps solving little problem in life such as notify you when there's rain at your
 work place before you go for lunch so you can bring an umbrella.
 
 ### Usage
