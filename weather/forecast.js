@@ -1,119 +1,62 @@
-const AWS = require('aws-sdk')
 const request = require('request-promise')
-const geolib = require('geolib')
-const { Observable } = require('rxjs')
-const { isEmpty } = require('lodash')
-const { convertXMLtoJSON } = require('../utils/datatype')
-const abbreviation = require('./abbreviation')
-const { profiles } = require('../config/weather')()
+const { parseString } = require('xml2js')
+const { from, bindNodeCallback } = require('rxjs')
+const { map, mergeMap, filter, toArray } = require('rxjs/operators')
+const Telegram = require('telegraf/telegram')
+const { abbreviation, signal, area } = require('./abbreviation')
 
-const getWeatherReport = (dataset) => {
-  return request({
-    method: 'get',
-    uri: 'http://api.nea.gov.sg/api/WebAPI',
-    qs: {
-      keyref: process.env.APIKEY,
-      dataset
-    }
-  })
-  .then(response => convertXMLtoJSON(response))
-  .then(data => data.channel.item[0])
-}
+const makeCall = (apiKey) => {
+  const dataset = '2hr_nowcast'
+  const url = `http://api.nea.gov.sg/api/WebAPI?dataset=${dataset}&keyref=${apiKey}`
+  const source = from(request(url))
 
-const filterRainingArea = (location, areas) => {
-  return Observable
-    .from(areas)
-    .filter(area => {
-      const circle = { latitude: area['$'].lat, longitude: area['$'].lon }
-
-      return geolib.isPointInCircle(location, circle, parseInt(process.env.RADIUS))
-    })
-    .mergeMap(response => {
-      const location = response['$']
-      const { forecast, name } = location
-
-      if (forecast.includes(abbreviation.rain)) {
-        return Observable.of({ forecast: abbreviation.abbreviation[forecast], name })
-      }
-
-      return Observable.empty()
-    })
-    .toArray()
+  return source.pipe(
+    mergeMap(res => bindNodeCallback(parseString)(res)),
+    map(res => res.channel.item[0]),
+    map(res => ({
+      weatherForecast: res.weatherForecast[0].area,
+      validTime: res.validTime
+    })),
+    mergeMap(res => from(res.weatherForecast).pipe(
+      filter(data => signal.includes(data['$'].forecast)),
+      filter(data => area.includes(data['$'].name)),
+      map(data => ({ forecast: abbreviation[data['$'].forecast], area: data['$'].name })),
+      toArray(),
+      map(data => ({ validTime: res.validTime, data }))
+    ))
+  )
 }
 
 const index = (event, context, callback) => {
-  if (!event) {
-    event = {}
-  }
+  const apiKey = process.env.NEA_API
+  const token = process.env.BOT_TOKEN
+  const channel = process.env.BOT_CHANNEL
+  const bot = new Telegram(token)
 
-  return Observable
-    .fromPromise(getWeatherReport('2hr_nowcast'))
-    .mergeMap(response => {
-      const { validTime, weatherForecast } = response
-      const areas = weatherForecast[0].area
-      return Observable
-        .from(profiles)
-        .map(profile => {
-          return { profile, areas, validTime }
-        })
-    })
-    .mergeMap(response => {
-      return Observable.zip(
-        filterRainingArea(response.profile.home, response.areas),
-        filterRainingArea(response.profile.work, response.areas)
-      )
-      .mergeMap(([home, work]) => {
-        const { profile, validTime } = response
+  const source = makeCall(apiKey).pipe(
+    mergeMap(meta => from(meta.data).pipe(
+      map(res => `${res.area} - ${res.forecast}`),
+      toArray(),
+      map(res => {
+        const header = `<b>${meta.validTime}</b>`
+        res.unshift(header)
 
-        if (!isEmpty(home) && !isEmpty(work)) {
-          const message = 'Raining in home and work area around ' + validTime
-          return Observable.of({ message, profile })
-        }
-
-        if (!isEmpty(home)) {
-          const message = 'Home area rainning around ' + validTime
-          return Observable.of({ message, profile })
-        }
-
-        if (!isEmpty(work)) {
-          const message = 'Working place raining around ' + validTime
-          return Observable.of({ message, profile })
-        }
-
-        return Observable.empty()
+        return res
       })
-    })
-    .mergeMap(data => {
-      const sns = new AWS.SNS()
-      const snsAttributes = {
-        attributes: {
-          DefaultSenderID: 'Simi',
-          DefaultSMSType: 'Promotional'
-        }
-      }
+    )),
+    mergeMap(res => {
+      const opts = { parse_mode: 'HTML' }
+      const content = res.join('\n')
 
-      return Observable
-        .fromPromise(sns.setSMSAttributes(snsAttributes).promise())
-        .mergeMap(() => {
-          const params = {
-            Message: data.message,
-            PhoneNumber: data.profile.mobile
-          }
+      return from(bot.sendMessage(channel, content, opts))
+    })
+  )
 
-          return Observable.fromPromise(sns.publish(params).promise())
-        })
-    })
-    .subscribe({
-      next: result => {
-        console.log('err', result)
-      },
-      error: result => {
-        console.error(result.message)
-      },
-      complete: () => {
-        context.done(null)
-      }
-    })
+  return source.subscribe(
+    (res) => console.log(res),
+    (err) => console.log(err.message),
+    () => callback(null)
+  )
 }
 
-module.exports = { index }
+module.exports = { makeCall, index }

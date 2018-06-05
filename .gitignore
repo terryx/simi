@@ -1,5 +1,6 @@
 node_modules
 .DS_Store
-config/*.js
-!config/*sample*.js
+config*.js
 .serverless
+.env
+test/data

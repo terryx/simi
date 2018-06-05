@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "test:weather": "sls invoke local -f WeatherForecast --profile=personal",
-    "deploy": "sls deploy"
+    "test": "ava",
+    "local": "sls invoke local -f WeatherForecast --stage=prd",
+    "deploy": "sls deploy --stage=prd"
   },
   "repository": {
     "type": "git",
@@ -16,22 +16,23 @@
     "reminder"
   ],
   "author": "Terry Yuen",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/terryx/simi/issues"
   },
   "homepage": "https://github.com/terryx/simi#readme",
   "devDependencies": {
-    "aws-sdk": "^2.171.0",
-    "serverless": "^1.24.1",
-    "standard": "^10.0.3"
+    "ava": "^0.25.0",
+    "aws-sdk": "^2.251.1",
+    "serverless": "^1.27.3",
+    "sinon": "^5.0.10",
+    "standard": "^11.0.1"
   },
   "dependencies": {
-    "geolib": "^2.0.24",
-    "lodash": "^4.17.4",
-    "request": "^2.83.0",
+    "request": "^2.87.0",
     "request-promise": "^4.2.2",
-    "rxjs": "^5.5.5",
+    "rxjs": "^6.2.0",
+    "telegraf": "^3.21.2",
     "xml2js": "^0.4.19"
   }
 }

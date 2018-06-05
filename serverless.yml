@@ -1,28 +1,27 @@
 service:
   name: simi
 
-custom:
-  aws: ${file(./config/aws.js)}
-  weather: ${file(./config/weather.js)}
+custom: ${file(./config.${opt:stage}.js)}
 
 provider:
   name: aws
-  runtime: nodejs6.10
-  stage: prd
-  region: ap-southeast-1
+  runtime: nodejs8.10
+  stage: ${opt:stage}
+  region: ${self:custom.aws.region}
   role: ${self:custom.aws.role}
+  profile: ${self:custom.aws.profile}
+  environment:
+    NEA_API: ${self:custom.nea.apikey}
+    BOT_TOKEN: ${self:custom.telegram.token}
+    BOT_CHANNEL: ${self:custom.telegram.channel}
 
 package:
   exclude:
     - .git/**
+    - test/**
 
 functions:
   WeatherForecast:
     handler: weather/forecast.index
-    environment:
-      APIKEY: ${self:custom.weather.apikey}
-      RADIUS: 3000
     events:
-      - schedule:
-          rate: cron(0 01/04 ? * MON-FRI *)
-          enabled: true
+      - schedule: ${self:custom.aws.schedule}
