@@ -6,6 +6,7 @@
   "scripts": {
     "test": "ava",
     "local": "sls invoke local -f WeatherForecast --stage=prd",
+    "remote": "sls invoke -f WeatherForecast --stage=prd",
     "deploy": "sls deploy --stage=prd"
   },
   "repository": {

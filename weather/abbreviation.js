@@ -34,7 +34,7 @@ const abbreviation = {
   'WS': 'Windy, Showers'
 }
 
-const signal = [ 'FA',
+const signal = [
   'HG', 'HR', 'HS', 'HT', 'LR',
   'LS', 'RA', 'SH', 'SK', 'PS',
   'SR', 'SS', 'TL', 'WS'
