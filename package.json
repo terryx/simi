@@ -7,7 +7,8 @@
     "test": "ava",
     "local": "sls invoke local -f WeatherForecast --stage=prd",
     "remote": "sls invoke -f WeatherForecast --stage=prd",
-    "deploy": "sls deploy --stage=prd"
+    "deploy": "sls deploy --stage=prd",
+    "log": "sls logs -f WeatherForecast --stage=prd -t --startTime=1d"
   },
   "repository": {
     "type": "git",

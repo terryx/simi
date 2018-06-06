@@ -37,6 +37,7 @@ const index = (event, context, callback) => {
     mergeMap(meta => from(meta.data).pipe(
       map(res => `${res.area} - ${res.forecast}`),
       toArray(),
+      filter(res => res.length > 1),
       map(res => {
         const header = `<b>${meta.validTime}</b>`
         res.unshift(header)
