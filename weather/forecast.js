@@ -35,7 +35,7 @@ const index = (event, context, callback) => {
 
   const source = makeCall(apiKey).pipe(
     mergeMap(meta => from(meta.data).pipe(
-      map(res => `${res.area} - ${res.forecast}`),
+      map(res => `<b>${res.area}</b> - ${res.forecast}`),
       toArray(),
       filter(res => res.length > 1),
       map(res => {
